@@ -3,6 +3,12 @@ pipeline {
 
     stages {
         stage('Unit Test Backend') {
+            agent {
+                docker {
+                    image 'snakee/golang-junit:1.21'
+                    reuseNode true // ca permet de ne pas recréer un container à chaque fois, mais de réutiliser le même pour les étapes suivantes
+                }
+            }
             steps {
                 dir('bugtracker-backend'){
                     sh 'go test ./... -v'
