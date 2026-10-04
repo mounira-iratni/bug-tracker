@@ -70,6 +70,8 @@ func createServer() *http.Server {
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
 			"http://localhost:3000",
+			"http://127.0.0.1:3000",
+			"http://192.168.180.15:3000",
 			"https://bugtracker-staging-jameswillett.fly.dev",
 			"https://bugtracker-jameswillett.fly.dev",
 		},
@@ -77,6 +79,7 @@ func createServer() *http.Server {
 		AllowedHeaders: []string{"*"},
 		ExposedHeaders: []string{"Content-Length"},
 		AllowCredentials: true,
+		MaxAge:           300,
 	})
 
 	// Wrap the router with CORS middleware
