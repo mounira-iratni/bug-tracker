@@ -9,6 +9,10 @@ pipeline {
                     reuseNode true // ca permet de ne pas recréer un container à chaque fois, mais de réutiliser le même pour les étapes suivantes
                 }
             }
+            environment {
+                // Définit le cache Go dans le dossier temporaire pour éviter les erreurs de permission
+                GOCACHE = '/tmp/go-cache' 
+            }
             steps {
                 dir('bugtracker-backend'){
                     sh 'go test ./... -v'
