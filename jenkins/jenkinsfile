@@ -10,8 +10,12 @@ pipeline {
                 }
             }
             environment {
-                // Définit le cache Go dans le dossier temporaire pour éviter les erreurs de permission
-                GOCACHE = '/tmp/go-cache' 
+                // Redirige le cache de compilation
+                GOCACHE = '/tmp/go-cache'
+                
+                // Redirige le téléchargement des dépendances (modules)
+                GOMODCACHE = '/tmp/go-mod-cache'
+                GOPATH = '/tmp/go'
             }
             steps {
                 dir('bugtracker-backend'){
