@@ -2,77 +2,84 @@ pipeline {
     agent any
 
     stages {
-        stage('Unit Test Backend') {
-            agent {
-                docker {
-                    image 'snakee/golang-junit:1.21'
-                    reuseNode true // ca permet de ne pas recréer un container à chaque fois, mais de réutiliser le même pour les étapes suivantes
+        stage('Execute Unit Test') {
+            parallel {
+                stage('Unit Test Backend') {
+                    agent {
+                        docker {
+                            image 'snakee/golang-junit:1.21'
+                            reuseNode true // ca permet de ne pas recréer un container à chaque fois, mais de réutiliser le même pour les étapes suivantes
+                        }
+                    }
+                    environment {
+                        // Redirige le cache de compilation
+                        GOCACHE = '/tmp/go-cache'
+                        
+                        // Redirige le téléchargement des dépendances (modules)
+                        GOMODCACHE = '/tmp/go-mod-cache'
+                        GOPATH = '/tmp/go'
+                    }
+                    steps {
+                        dir('bugtracker-backend'){
+                            sh '''
+                            
+                                go test ./... -v 2>&1 | go-junit-report > test-results.xml
+
+                                # Generate coverage report
+                                go test -coverprofile=coverage.out -covermode=atomic ./...
+                                go tool cover -html=coverage.out -o coverage.html
+
+
+                                mkdir -p reports 
+                                mv coverage.html reports/
+                            '''
+                        }
+                    }
+                    post {
+                        always {
+                            junit 'bugtracker-backend/test-results.xml'
+                            publishHTML target: [
+                                reportDir: 'bugtracker-backend/reports',
+                                reportFiles: 'coverage.html',
+                                reportName: 'Backend Coverage Report'
+                            ]
+                        }
+                    }
+                }
+                stage('Unit Test Frontend') {
+                    agent{
+                        docker {
+                            image 'node:20-alpine'
+                            reuseNode true // ca permet de ne pas recréer un container à chaque fois, mais de réutiliser le même pour les étapes suivantes
+                        }
+                    }
+                    steps {
+                        dir('bugtracker-frontend'){
+                            sh '''
+                                npm ci
+                                npm test
+                                mkdir -p reports
+                                mv coverage reports/
+                            '''
+                        }   
+                    }
+                    post {
+                        always {
+                            junit 'bugtracker-frontend/test-results.xml'
+                            publishHTML target: [
+                                reportDir: 'bugtracker-frontend/reports/coverage',
+                                reportFiles: 'index.html',
+                                reportName: 'Frontend Coverage Report'
+                            ]
+                        }
+                    }
                 }
             }
-            environment {
-                // Redirige le cache de compilation
-                GOCACHE = '/tmp/go-cache'
-                
-                // Redirige le téléchargement des dépendances (modules)
-                GOMODCACHE = '/tmp/go-mod-cache'
-                GOPATH = '/tmp/go'
-            }
-            steps {
-                dir('bugtracker-backend'){
-                    sh '''
-                    
-                        go test ./... -v 2>&1 | go-junit-report > test-results.xml
-
-                        # Generate coverage report
-                        go test -coverprofile=coverage.out -covermode=atomic ./...
-                        go tool cover -html=coverage.out -o coverage.html
-
-
-                        mkdir -p reports 
-                        mv coverage.html reports/
-                    '''
-                }
-            }
-            post {
-                always {
-                    junit 'bugtracker-backend/test-results.xml'
-                    publishHTML target: [
-                        reportDir: 'bugtracker-backend/reports',
-                        reportFiles: 'coverage.html',
-                        reportName: 'Backend Coverage Report'
-                    ]
-                }
-            }
-
-        }
-
-        stage('Unit Test Frontend') {
-            agent{
-                docker {
-                    image 'node:20-alpine'
-                    reuseNode true // ca permet de ne pas recréer un container à chaque fois, mais de réutiliser le même pour les étapes suivantes
-                }
-            }
-            steps {
-                dir('bugtracker-frontend'){
-                    sh '''
-                        npm ci
-                        npm test
-                        mkdir -p reports
-                        mv coverage reports/
-                    '''
-                }   
-            }
-            post {
-                always {
-                    junit 'bugtracker-frontend/test-results.xml'
-                    publishHTML target: [
-                        reportDir: 'bugtracker-frontend/reports/coverage',
-                        reportFiles: 'index.html',
-                        reportName: 'Frontend Coverage Report'
-                    ]
-                }
-            }
+        }  
+    }
+    post {
+        always {
+            cleanWs()
         }
     }
 }
