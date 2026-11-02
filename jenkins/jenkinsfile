@@ -34,7 +34,7 @@ pipeline {
             steps {
                 dir('bugtracker-Frontend'){
                     sh '''
-                        npm ci
+                        npm install
                         npm test
                     '''
                 }
