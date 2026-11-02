@@ -23,5 +23,23 @@ pipeline {
                 }
             }
         }
+
+        stage('Unit Test BAckend') {
+            agent{
+                docker {
+                    image 'node:20-alpine'
+                    reuseNode true // ca permet de ne pas recréer un container à chaque fois, mais de réutiliser le même pour les étapes suivantes
+                }
+            }
+            steps {
+                dir('bugtracker-Frontend'){
+                    sh '''
+                        npm ci
+                        npm test
+                    '''
+                }
+                    
+            }
+        }
     }
 }
