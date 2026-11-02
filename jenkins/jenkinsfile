@@ -37,8 +37,12 @@ pipeline {
                         npm install
                         npm test
                     '''
+                }   
+            }
+            post {
+                always {
+                    junit 'backtracker-frontend/test-results.xml'
                 }
-                    
             }
         }
     }
