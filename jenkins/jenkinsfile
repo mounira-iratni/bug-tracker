@@ -75,7 +75,21 @@ pipeline {
                     }
                 }
             }
-        }  
+        } 
+        stage ('Launch Application ') {
+            agent {
+                docker {
+                    image 'docker:27.5.1'
+                    reuseNode true
+                    // monte le socket Docker de l'hôte pour pouvoir lancer docker compose -u 0 means run docker compose as a root user
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -u 0'
+                }
+            }
+            steps {
+                sh ' docker compose up --build -d'
+            }
+
+        }
     }
     post {
         always {
