@@ -90,7 +90,7 @@ pipeline {
             }
         }
 
-        stgae ('API Tests'){
+        stage ('API Tests') {
             agent {
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.50.0-jammy'
